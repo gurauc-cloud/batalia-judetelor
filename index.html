@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bătălia Județelor România LIVE</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#101522;color:white;font-family:Arial,sans-serif;padding:15px}
+header{text-align:center;padding:18px;background:linear-gradient(110deg,#123b9b,#e6b900,#bd172d);border-radius:16px}
+h1{font-size:24px;margin:5px}
+header p{margin:7px 0}
+.panel{background:#1c2638;border:1px solid #34445f;border-radius:14px;padding:15px;margin-top:14px}
+h2{font-size:18px;margin:0 0 12px}
+input,select{width:100%;padding:12px;margin:5px 0 12px;border-radius:8px;border:1px solid #50617b;background:#101522;color:white;font-size:16px}
+button{border:0;border-radius:9px;padding:12px;font-weight:bold;font-size:14px;cursor:pointer}
+.primary{background:#f1c52e;color:#171717;width:100%}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.blue{background:#245bd5;color:white}
+.yellow{background:#f1c52e;color:#161616}
+.red{background:#d52d43;color:white}
+.counties{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.county{background:#303c51;color:white;min-height:58px;border:1px solid #53627a}
+.county small{display:block;font-size:10px;margin-top:4px}
+.county.selected{outline:3px solid white}
+#clock{text-align:center;font-size:38px;font-weight:bold;color:#f1c52e}
+table{width:100%;border-collapse:collapse}
+td{padding:9px;border-bottom:1px solid #39465b}
+.note{font-size:12px;color:#bac5d6;line-height:1.5}
+</style>
+</head>
+<body>
+<header>
+<h1>🇷🇴 BĂTĂLIA JUDEȚELOR</h1>
+<p>LIVE • Cucerește România!</p>
+<strong>42 DE TERITORII • 5 MINUTE</strong>
+</header>
+
+<div class="panel">
+<h2>⏱️ Timpul rundei</h2>
+<div id="clock">05:00</div>
+<div class="actions">
+<button class="blue" onclick="startTimer()">PORNEȘTE</button>
+<button class="red" onclick="pauseTimer()">PAUZĂ</button>
+</div>
+<button class="yellow" style="width:100%;margin-top:8px" onclick="resetTimer()">RUNDĂ NOUĂ</button>
+</div>
+
+<div class="panel">
+<h2>👤 Jucător</h2>
+<input id="player" placeholder="Numele jucătorului TikTok">
+<select id="team">
+<option value="#245bd5">🔵 Echipa albastră</option>
+<option value="#e6b900">🟡 Echipa galbenă</option>
+<option value="#d52d43">🔴 Echipa roșie</option>
+</select>
+<h2>🗺️ Alege un județ</h2>
+<div class="counties" id="counties"></div>
+<p class="note">Selectează un județ, apoi revendică-l pentru jucătorul ales.</p>
+<button class="primary" onclick="claim()">RECLAMĂ JUDEȚUL</button>
+</div>
+
+<div class="panel">
+<h2>⚔️ Adaugă puncte</h2>
+<p id="chosen">Niciun județ selectat</p>
+<div class="actions">
+<button class="blue" onclick="points(1)">💬 Comentariu +1</button>
+<button class="yellow" onclick="points(2)">❤️ Tap-tap +2</button>
+</div>
+</div>
+
+<div class="panel">
+<h2>🏆 Clasament</h2>
+<table><tbody id="ranking"></tbody></table>
+</div>
+
+<p class="note">Versiune demonstrativă. Punctele se introduc manual. Jocul nu este încă conectat automat la comentariile, aprecierile sau cadourile TikTok. Teritoriile sunt reprezentate schematic, nu pe o hartă geografică exactă.</p>
+
+<script>
+const names=["Alba","Arad","Argeș","Bacău","Bihor","Bistrița-Năsăud","Botoșani","Brăila","Brașov","București","Buzău","Călărași","Caraș-Severin","Cluj","Constanța","Covasna","Dâmbovița","Dolj","Galați","Giurgiu","Gorj","Harghita","Hunedoara","Ialomița","Iași","Ilfov","Maramureș","Mehedinți","Mureș","Neamț","Olt","Prahova","Sălaj","Satu Mare","Sibiu","Suceava","Teleorman","Timiș","Tulcea","Vaslui","Vâlcea","Vrancea"];
+let data={};
+let selected="";
+let timer=null;
+let seconds=300;
+try{data=JSON.parse(localStorage.getItem("batalia42"))||{}}catch(e){data={}}
+
+function save(){localStorage.setItem("batalia42",JSON.stringify(data))}
+function render(){
+ const box=document.getElementById("counties");
+ box.innerHTML="";
+ names.forEach(n=>{
+  let d=data[n]||{};
+  let b=document.createElement("button");
+  b.className="county"+(selected===n?" selected":"");
+  b.style.background=d.color||"#303c51";
+  b.innerHTML=n+(d.owner?"<small>"+d.owner+" • "+(d.score||0)+" pct</small>":"<small>Liber</small>");
+  b.onclick=()=>{selected=n;document.getElementById("chosen").textContent="Județ selectat: "+n;render()};
+  box.appendChild(b);
+ });
+ let scores={};
+ Object.values(data).forEach(d=>{if(d.owner)scores[d.owner]=(scores[d.owner]||0)+(d.score||0)});
+ let entries=Object.entries(scores).sort((a,b)=>b[1]-a[1]);
+ document.getElementById("ranking").innerHTML=entries.length?entries.map((x,i)=>`<tr><td>${i+1}. ${x[0]}</td><td align="right">${x[1]} puncte</td></tr>`).join(""):"<tr><td>Clasamentul este gol.</td></tr>";
+}
+function claim(){
+ let p=document.getElementById("player").value.trim();
+ if(!p||!selected){alert("Scrie numele jucătorului și selectează un județ.");return}
+ data[selected]={owner:p,color:document.getElementById("team").value,score:0};
+ save();render();
+}
+function points(n){
+ if(!selected||!data[selected]||!data[selected].owner){alert("Selectează un județ revendicat.");return}
+ data[selected].score=(data[selected].score||0)+n;
+ save();render();
+}
+function showTime(){
+ let m=Math.floor(seconds/60),s=seconds%60;
+ document.getElementById("clock").textContent=String(m).padStart(2,"0")+":"+String(s).padStart(2,"0");
+}
+function startTimer(){
+ if(timer)return;
+ if(seconds<=0)seconds=300;
+ timer=setInterval(()=>{
+  seconds--;showTime();
+  if(seconds<=0){clearInterval(timer);timer=null;alert("Runda s-a terminat!");}
+ },1000);
+}
+function pauseTimer(){clearInterval(timer);timer=null}
+function resetTimer(){pauseTimer();seconds=300;showTime()}
+render();showTime();
+</script>
+</body>
+</html>
