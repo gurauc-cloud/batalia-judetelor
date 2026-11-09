@@ -1,133 +1,184 @@
+
 <!DOCTYPE html>
 <html lang="ro">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Bătălia Județelor România LIVE</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
+:root{--bg:#07111f;--panel:#101e31;--line:#263b56;--gold:#ffd166;--muted:#9eb0c7}
 *{box-sizing:border-box}
-body{margin:0;background:#101522;color:white;font-family:Arial,sans-serif;padding:15px}
-header{text-align:center;padding:18px;background:linear-gradient(110deg,#123b9b,#e6b900,#bd172d);border-radius:16px}
-h1{font-size:24px;margin:5px}
-header p{margin:7px 0}
-.panel{background:#1c2638;border:1px solid #34445f;border-radius:14px;padding:15px;margin-top:14px}
-h2{font-size:18px;margin:0 0 12px}
-input,select{width:100%;padding:12px;margin:5px 0 12px;border-radius:8px;border:1px solid #50617b;background:#101522;color:white;font-size:16px}
-button{border:0;border-radius:9px;padding:12px;font-weight:bold;font-size:14px;cursor:pointer}
-.primary{background:#f1c52e;color:#171717;width:100%}
-.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.blue{background:#245bd5;color:white}
-.yellow{background:#f1c52e;color:#161616}
-.red{background:#d52d43;color:white}
-.counties{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
-.county{background:#303c51;color:white;min-height:58px;border:1px solid #53627a}
-.county small{display:block;font-size:10px;margin-top:4px}
-.county.selected{outline:3px solid white}
-#clock{text-align:center;font-size:38px;font-weight:bold;color:#f1c52e}
-table{width:100%;border-collapse:collapse}
-td{padding:9px;border-bottom:1px solid #39465b}
-.note{font-size:12px;color:#bac5d6;line-height:1.5}
+body{margin:0;background:radial-gradient(ellipse at 50% 10%,#173553 0,#091525 52%,#050b14 100%);color:#f5f8ff;font-family:Arial,Helvetica,sans-serif}
+.app{width:min(100vw,56.25vh);min-height:100svh;margin:auto;padding:10px;display:flex;flex-direction:column;gap:9px}
+header{text-align:center;padding:5px 4px 2px}
+.kicker{font-size:9px;letter-spacing:3px;color:#80c9ff;font-weight:800}
+h1{font-size:clamp(19px,5vw,27px);margin:4px 0 2px;text-shadow:0 2px 15px #37a5ff66}
+.subtitle{font-size:10px;color:var(--muted)}
+.stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
+.stat,.panel{background:linear-gradient(145deg,#152840ed,#0d1a2bed);border:1px solid var(--line);border-radius:13px;box-shadow:0 6px 20px #0005}
+.stat{padding:8px 5px;text-align:center}
+.stat small{display:block;font-size:8px;letter-spacing:1px;color:var(--muted);font-weight:bold}
+.stat strong{display:block;font-size:19px;margin-top:3px;color:var(--gold)}
+.map-wrap{position:relative;border:1px solid #365477;border-radius:17px;overflow:hidden;background:#152b3b;box-shadow:0 10px 28px #0008}
+#map{height:min(47svh,440px);min-height:300px;width:100%;background:linear-gradient(145deg,#234b5a,#122b3d)}
+.map-tag{position:absolute;z-index:500;top:9px;left:9px;background:#071321d9;border:1px solid #5a7796;border-radius:9px;padding:6px 8px;font-size:9px;font-weight:800;letter-spacing:1px;pointer-events:none}
+.map-hint{position:absolute;z-index:500;bottom:8px;left:8px;right:8px;text-align:center;font-size:9px;color:#eaf4ff;background:#071321c9;border-radius:8px;padding:6px;pointer-events:none}
+.leaflet-container{font:inherit}
+.leaflet-control-attribution{font-size:7px!important;background:#071321bb!important;color:#c7d5e5!important}
+.leaflet-control-attribution a{color:#8ed1ff!important}
+.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#10223a;color:#fff}
+.leaflet-popup-content{margin:10px;font-size:12px}
+.panel{padding:10px}
+.panel-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.panel-title b{font-size:11px;letter-spacing:1px}
+.panel-title span{font-size:9px;color:var(--muted)}
+.join-row{display:flex;gap:7px}
+select{min-width:0;background:#071525;color:white;border:1px solid #365477;border-radius:9px;padding:10px;font-size:12px;flex:1}
+button{border:0;border-radius:9px;padding:10px 11px;background:linear-gradient(135deg,#ffc857,#ff9f43);color:#172033;font-weight:900;font-size:11px}
+button:active{transform:scale(.97)}
+.actions{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:8px}
+.actions button{padding:10px 3px;font-size:10px}
+.actions button:nth-child(2){background:linear-gradient(135deg,#72e0c0,#36b99a)}
+.actions button:nth-child(3){background:linear-gradient(135deg,#c5a0ff,#8c68ec)}
+.current{font-size:10px;color:#c5d4e7;margin-top:7px;min-height:14px}
+.rank-list{display:grid;grid-template-columns:1fr 1fr;gap:5px 7px}
+.rank{display:flex;align-items:center;gap:6px;background:#091728;border:1px solid #203751;border-radius:8px;padding:6px;font-size:10px;min-width:0}
+.dot{width:9px;height:9px;border-radius:3px;flex:none;box-shadow:0 0 8px currentColor}
+.rank-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.rank-score{font-weight:900;color:var(--gold)}
+.footer{text-align:center;color:#71869f;font-size:8px;padding:2px 0 8px}
+.toast{position:fixed;z-index:1000;left:50%;bottom:18px;transform:translateX(-50%);background:#f8c65c;color:#172033;font-weight:900;padding:10px 14px;border-radius:20px;font-size:11px;opacity:0;transition:.2s;pointer-events:none;max-width:90vw;text-align:center}
+.toast.show{opacity:1}
+@media(min-width:600px){.app{border-left:1px solid #1d344d;border-right:1px solid #1d344d}#map{height:430px}}
 </style>
 </head>
 <body>
+<div class="app">
 <header>
-<h1>🇷🇴 BĂTĂLIA JUDEȚELOR</h1>
-<p>LIVE • Cucerește România!</p>
-<strong>42 DE TERITORII • 5 MINUTE</strong>
+ <div class="kicker">ROMÂNIA • 42 DE TERITORII</div>
+ <h1>⚔ BĂTĂLIA JUDEȚELOR</h1>
+ <div class="subtitle">LIVE • Alege județul. Adună puncte. Cucerește harta.</div>
 </header>
-
-<div class="panel">
-<h2>⏱️ Timpul rundei</h2>
-<div id="clock">05:00</div>
-<div class="actions">
-<button class="blue" onclick="startTimer()">PORNEȘTE</button>
-<button class="red" onclick="pauseTimer()">PAUZĂ</button>
+<section class="stats">
+ <div class="stat"><small>TIMP RĂMAS</small><strong id="timer">05:00</strong></div>
+ <div class="stat"><small>JUDEȚE CUCERITE</small><strong id="captured">0/42</strong></div>
+ <div class="stat"><small>LIDER</small><strong id="leader" style="font-size:14px">—</strong></div>
+</section>
+<div class="map-wrap">
+ <div class="map-tag">🗺 HARTA ROMÂNIEI • LIVE</div>
+ <div id="map"></div>
+ <div class="map-hint">Atinge un județ pentru detalii • Culorile se schimbă la cucerire</div>
 </div>
-<button class="yellow" style="width:100%;margin-top:8px" onclick="resetTimer()">RUNDĂ NOUĂ</button>
+<section class="panel">
+ <div class="panel-title"><b>🎯 INTRĂ ÎN BĂTĂLIE</b><span>un spectator = un județ / rundă</span></div>
+ <div class="join-row">
+  <select id="county"><option value="">Alege județul tău…</option></select>
+  <button onclick="joinCounty()">INTRĂ</button>
+ </div>
+ <div class="current" id="current">Nu ești înscris într-un județ.</div>
+ <div class="actions">
+  <button onclick="addPoints(1,'Comentariu')">💬 COMENTARIU +1</button>
+  <button onclick="addPoints(2,'Like-uri')">❤️ LIKE +2</button>
+  <button onclick="gift()">🎁 CADOU</button>
+ </div>
+</section>
+<section class="panel">
+ <div class="panel-title"><b>🏆 CLASAMENT JUDEȚE</b><span>puncte acumulate</span></div>
+ <div class="rank-list" id="ranking"></div>
+</section>
+<div class="footer">VERSIUNE DEMO • Scorurile sunt locale și se resetează la reîncărcare • Nu este conectată la TikTok</div>
 </div>
-
-<div class="panel">
-<h2>👤 Jucător</h2>
-<input id="player" placeholder="Numele jucătorului TikTok">
-<select id="team">
-<option value="#245bd5">🔵 Echipa albastră</option>
-<option value="#e6b900">🟡 Echipa galbenă</option>
-<option value="#d52d43">🔴 Echipa roșie</option>
-</select>
-<h2>🗺️ Alege un județ</h2>
-<div class="counties" id="counties"></div>
-<p class="note">Selectează un județ, apoi revendică-l pentru jucătorul ales.</p>
-<button class="primary" onclick="claim()">RECLAMĂ JUDEȚUL</button>
-</div>
-
-<div class="panel">
-<h2>⚔️ Adaugă puncte</h2>
-<p id="chosen">Niciun județ selectat</p>
-<div class="actions">
-<button class="blue" onclick="points(1)">💬 Comentariu +1</button>
-<button class="yellow" onclick="points(2)">❤️ Tap-tap +2</button>
-</div>
-</div>
-
-<div class="panel">
-<h2>🏆 Clasament</h2>
-<table><tbody id="ranking"></tbody></table>
-</div>
-
-<p class="note">Versiune demonstrativă. Punctele se introduc manual. Jocul nu este încă conectat automat la comentariile, aprecierile sau cadourile TikTok. Teritoriile sunt reprezentate schematic, nu pe o hartă geografică exactă.</p>
-
+<div class="toast" id="toast"></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-const names=["Alba","Arad","Argeș","Bacău","Bihor","Bistrița-Năsăud","Botoșani","Brăila","Brașov","București","Buzău","Călărași","Caraș-Severin","Cluj","Constanța","Covasna","Dâmbovița","Dolj","Galați","Giurgiu","Gorj","Harghita","Hunedoara","Ialomița","Iași","Ilfov","Maramureș","Mehedinți","Mureș","Neamț","Olt","Prahova","Sălaj","Satu Mare","Sibiu","Suceava","Teleorman","Timiș","Tulcea","Vaslui","Vâlcea","Vrancea"];
-let data={};
-let selected="";
-let timer=null;
-let seconds=300;
-try{data=JSON.parse(localStorage.getItem("batalia42"))||{}}catch(e){data={}}
+const counties = [
+["Alba","AB"],["Arad","AR"],["Argeș","AG"],["Bacău","BC"],["Bihor","BH"],["Bistrița-Năsăud","BN"],["Botoșani","BT"],["Brăila","BR"],["Brașov","BV"],["București","B"],["Buzău","BZ"],["Călărași","CL"],["Caraș-Severin","CS"],["Cluj","CJ"],["Constanța","CT"],["Covasna","CV"],["Dâmbovița","DB"],["Dolj","DJ"],["Galați","GL"],["Giurgiu","GR"],["Gorj","GJ"],["Harghita","HR"],["Hunedoara","HD"],["Ialomița","IL"],["Iași","IS"],["Ilfov","IF"],["Maramureș","MM"],["Mehedinți","MH"],["Mureș","MS"],["Neamț","NT"],["Olt","OT"],["Prahova","PH"],["Sălaj","SJ"],["Satu Mare","SM"],["Sibiu","SB"],["Suceava","SV"],["Teleorman","TR"],["Timiș","TM"],["Tulcea","TL"],["Vâlcea","VL"],["Vaslui","VS"],["Vrancea","VN"]
+];
+const palette=["#ff6b6b","#f7b267","#f6d365","#b8e986","#6ee7b7","#4dd0e1","#67b7ff","#8b9cff","#b99cff","#ed91d2","#ff9e80","#a3d977","#62c7ad","#55b9d5","#7297e8","#c18be8","#e58ab0","#f2a65a","#d7c45c","#83c9a3","#5db8b0","#7ca6e8"];
+const teams={};
+counties.forEach((c,i)=>teams[c[0]]={code:c[1],color:palette[i%palette.length],score:0});
+let myCounty=null,geoLayer=null,seconds=300,timerHandle=null;
+const map=L.map('map',{zoomControl:false,scrollWheelZoom:false}).setView([45.85,24.9],6);
+L.control.zoom({position:'bottomright'}).addTo(map);
 
-function save(){localStorage.setItem("batalia42",JSON.stringify(data))}
-function render(){
- const box=document.getElementById("counties");
- box.innerHTML="";
- names.forEach(n=>{
-  let d=data[n]||{};
-  let b=document.createElement("button");
-  b.className="county"+(selected===n?" selected":"");
-  b.style.background=d.color||"#303c51";
-  b.innerHTML=n+(d.owner?"<small>"+d.owner+" • "+(d.score||0)+" pct</small>":"<small>Liber</small>");
-  b.onclick=()=>{selected=n;document.getElementById("chosen").textContent="Județ selectat: "+n;render()};
-  box.appendChild(b);
- });
- let scores={};
- Object.values(data).forEach(d=>{if(d.owner)scores[d.owner]=(scores[d.owner]||0)+(d.score||0)});
- let entries=Object.entries(scores).sort((a,b)=>b[1]-a[1]);
- document.getElementById("ranking").innerHTML=entries.length?entries.map((x,i)=>`<tr><td>${i+1}. ${x[0]}</td><td align="right">${x[1]} puncte</td></tr>`).join(""):"<tr><td>Clasamentul este gol.</td></tr>";
+function resolveName(raw){
+ const s=String(raw).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/ county| judet/g,"").trim();
+ const aliases={"bucharest":"București","bucuresti":"București","bistrita-nasaud":"Bistrița-Năsăud","caras-severin":"Caraș-Severin","dambovita":"Dâmbovița","mehedinti":"Mehedinți","iasi":"Iași","mures":"Mureș","salaj":"Sălaj","satu mare":"Satu Mare","valcea":"Vâlcea"};
+ if(aliases[s])return counties.find(c=>c[0]===aliases[s]);
+ return counties.find(c=>c[0].toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"")===s)||null;
 }
-function claim(){
- let p=document.getElementById("player").value.trim();
- if(!p||!selected){alert("Scrie numele jucătorului și selectează un județ.");return}
- data[selected]={owner:p,color:document.getElementById("team").value,score:0};
- save();render();
+function featureName(f){
+ const m=resolveName(f.properties.NAME_1||f.properties.name||"");
+ return m?m[0]:(f.properties.NAME_1||"Județ");
 }
-function points(n){
- if(!selected||!data[selected]||!data[selected].owner){alert("Selectează un județ revendicat.");return}
- data[selected].score=(data[selected].score||0)+n;
- save();render();
+function styleFeature(feature){
+ const name=featureName(feature),team=teams[name];
+ return {color:"#d9edff",weight:1.2,opacity:.9,fillColor:team?team.color:"#7893a8",fillOpacity:.84};
 }
-function showTime(){
- let m=Math.floor(seconds/60),s=seconds%60;
- document.getElementById("clock").textContent=String(m).padStart(2,"0")+":"+String(s).padStart(2,"0");
+function onEachFeature(f,layer){
+ const name=featureName(f),t=teams[name];
+ layer.bindPopup(`<b>${name}</b><br>Scor: ${t?t.score:0} puncte`);
+ layer.on('click',()=>{document.getElementById('county').value=name;});
 }
-function startTimer(){
- if(timer)return;
- if(seconds<=0)seconds=300;
- timer=setInterval(()=>{
-  seconds--;showTime();
-  if(seconds<=0){clearInterval(timer);timer=null;alert("Runda s-a terminat!");}
- },1000);
+fetch("https://raw.githubusercontent.com/GabrielRondelli/geojson/main/romania-counties.geojson")
+.then(r=>{if(!r.ok)throw new Error("Harta nu s-a încărcat");return r.json()})
+.then(data=>{
+ geoLayer=L.geoJSON(data,{style:styleFeature,onEachFeature}).addTo(map);
+ map.fitBounds(geoLayer.getBounds(),{padding:[8,8]});
+ showToast("Harta județelor a fost încărcată!");
+})
+.catch(()=>showToast("Harta nu s-a încărcat. Verifică internetul și reîncarcă pagina."));
+
+const sel=document.getElementById('county');
+counties.forEach(c=>{
+ const o=document.createElement('option');
+ o.value=c[0];o.textContent=c[0]+" ("+c[1]+")";
+ sel.appendChild(o);
+});
+function joinCounty(){
+ const name=sel.value;
+ if(!name){showToast("Alege mai întâi un județ!");return}
+ if(myCounty&&myCounty!==name){showToast("Ești deja înscris la "+myCounty+" în această rundă.");return}
+ myCounty=name;
+ document.getElementById('current').textContent="Ești în echipa "+name+" ("+teams[name].code+"). Punctele tale merg la acest județ.";
+ showToast("Bine ai venit în echipa "+name+"!");
 }
-function pauseTimer(){clearInterval(timer);timer=null}
-function resetTimer(){pauseTimer();seconds=300;showTime()}
-render();showTime();
+function addPoints(n,source){
+ if(!myCounty){showToast("Alege județul și apasă INTRĂ.");return}
+ teams[myCounty].score+=n;refresh();
+ showToast(source+" • +"+n+" pentru "+myCounty);
+}
+function gift(){
+ if(!myCounty){showToast("Alege județul și apasă INTRĂ.");return}
+ const coins=Number(prompt("Valoarea cadoului în monede TikTok (demo):","5"));
+ if(!Number.isFinite(coins)||coins<=0)return;
+ const pts=Math.round(coins*2);
+ teams[myCounty].score+=pts;refresh();
+ showToast("Cadou demo: +"+pts+" puncte pentru "+myCounty);
+}
+function refresh(){
+ const sorted=Object.entries(teams).sort((a,b)=>b[1].score-a[1].score);
+ document.getElementById('ranking').innerHTML=sorted.slice(0,10).map(([n,t],i)=>
+ `<div class="rank"><span class="dot" style="background:${t.color};color:${t.color}"></span><span class="rank-name">${i+1}. ${n}</span><span class="rank-score">${t.score}</span></div>`
+ ).join('');
+ document.getElementById('leader').textContent=sorted[0][1].score?sorted[0][0]:"—";
+ if(geoLayer)geoLayer.setStyle(styleFeature);
+ document.getElementById('captured').textContent=Object.values(teams).filter(t=>t.score>0).length+"/42";
+}
+function showToast(msg){
+ const el=document.getElementById('toast');
+ el.textContent=msg;el.classList.add('show');
+ clearTimeout(showToast.t);
+ showToast.t=setTimeout(()=>el.classList.remove('show'),2200);
+}
+function tick(){
+ seconds=Math.max(0,seconds-1);
+ document.getElementById('timer').textContent=String(Math.floor(seconds/60)).padStart(2,'0')+":"+String(seconds%60).padStart(2,'0');
+ if(seconds===0){clearInterval(timerHandle);showToast("Runda s-a încheiat!")}
+}
+timerHandle=setInterval(tick,1000);
+refresh();
 </script>
 </body>
 </html>
